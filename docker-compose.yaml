@@ -1,0 +1,42 @@
+version: "3.7"
+services:
+  # 1) MongoDB for demonstration of source data
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+
+  # 2) Our postgres database
+  postgres: # The service will be named db.
+    image: postgres:14.15-alpine3.21
+    restart: always # Always try to restart if this stops running.
+    environment: # Provide environment variables. Format VAR: value.
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports: # Exposing ports for apps outside the docker-compose.
+      - "${DB_PORT}:5432" # Format is hostPort:containerPort <=> outside:inside.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 3) Apache NiFi for data flow orchestration
+  nifi:
+    image: apache/nifi:1.20.0
+    container_name: nifi
+    ports:
+      - "8080:8080"
+    environment:
+      NIFI_WEB_HTTP_PORT: 8080
+    depends_on:
+      - mongodb
+      - postgres
+
+volumes:
+  mongo_data:
+  postgres_data:
