@@ -135,6 +135,7 @@ Your schema:
 - **`type: { "type": "map", "values": ["null", "string"] }`**:
   - **`type: "map"`** → This means that `attributes` is a dynamic key-value structure.
   - **`values: ["null", "string"]`** → The values in the map can either be `null` or `string`.
+
   <h3 style="color:red">The schema is an Avro schema so the type is one of two options: JSON string naming a defined type or a JSON object of the form {type: "name" ...attributes...}</h3>
 
 ---
@@ -186,6 +187,116 @@ Each **row** in the CSV will be transformed into a **record** with a **map**:
 
 ---
 
-### **Next Steps**
-- If you want to turn **all column values in a row into a single string**, we need a custom strategy in `convertRecord` (or another processor).
-- Do you want me to explain how to **flatten the map** into a single string?
+The output of the **CSVReader** will be a **record-based representation** of the CSV data, structured according to the **Avro schema** you define.
+
+It's not JSON yet—it's still an **internal record format** that NiFi can process efficiently.
+
+Once the data reaches **ConvertRecord** and is written using **FreeFormTextRecordSetWriter**, it will be converted into a **flattened string** based on your writer configuration.
+
+<h2 style="color:yellow">Flattening the record's attributes field into a single string</h2>
+
+Since the freeFormTextWriter allows only very simple string manipulation,
+we need to add add an executeScript processor between convertRecord and 
+mergeRecord that would take the text output from the freeFormTextWriter 
+in convertRecord, somehow know it's a map (dict in Python),
+join all keys and values and then send it back into the executeScript 
+processor.
+
+1. **ConvertRecord**:  
+   - Uses **CSVReader** (with Avro schema) to parse CSV rows into **records**.
+   - Uses **FreeFormTextRecordSetWriter** to **serialize** the records into text format.
+   - The output is a **string**, but currently, it only contains the first column instead of all key-value pairs.
+
+2. **ExecuteScript (Python)**:  
+   - Reads the text output (which should represent a map/dictionary).
+   - Parses the data, joining **all keys and values** into a single string.
+   - Writes the transformed data back into the FlowFile.
+   - Sends the updated FlowFile to **MergeRecord**.
+
+3. **MergeRecord**:  
+   - Receives the modified FlowFiles from **ExecuteScript**.
+   - Merges multiple records together before inserting them into the database.
+
+---
+
+### 🔹 How to Implement `ExecuteScript`
+Here’s a Python script that reads the FlowFile content, joins all key-value pairs, and rewrites it:
+
+#### **Steps to Set Up ExecuteScript**
+1. Add an **ExecuteScript** processor between **ConvertRecord** and **MergeRecord**.
+2. In the **Script Engine** property, select **Python** (Jython).
+3. Paste the following script into the **Script Body**:
+
+```python
+from org.apache.nifi.processor.io import InputStreamCallback, OutputStreamCallback
+from org.apache.nifi.flowfile import FlowFile
+from org.apache.nifi.processor import ProcessSession
+from org.apache.commons.io import IOUtils
+import json
+
+# Type Annotations
+session: ProcessSession  # Provided by NiFi implicitly
+flowFile: FlowFile | None = session.get()  # FlowFile represents a NiFi data object
+
+if flowFile is not None:
+    try:
+        # Read the FlowFile content
+        class ReaderCallback(InputStreamCallback):
+            def __init__(self):
+                self.content: str = ""
+
+            def process(self, inputStream):
+                self.content = IOUtils.toString(inputStream, "UTF-8")
+
+        reader = ReaderCallback()
+        session.read(flowFile, reader)
+        content: str = reader.content  # Read content as a string
+
+        # Parse content as JSON
+        data: dict[str, str | None] = json.loads(content)  # Dictionary of column_name -> value
+
+        # Flatten the map into a single string: "key1=value1, key2=value2, ..."
+        flattened: str = ", ".join(f"{k}={v}" for k, v in data.items() if v is not None)
+
+        # Write the modified content back to the FlowFile
+        class WriterCallback(OutputStreamCallback):
+            def __init__(self, content: str):
+                self.content = content
+
+            def process(self, outputStream):
+                outputStream.write(self.content.encode("UTF-8"))
+
+        flowFile = session.write(flowFile, WriterCallback(flattened))
+
+        # Transfer to success
+        session.transfer(flowFile, REL_SUCCESS)
+
+    except Exception as e:
+        log.error("Error processing FlowFile", e)
+        session.transfer(flowFile, REL_FAILURE)
+```
+
+---
+
+### 🔹 Explanation of the Script:
+- **Reads** the FlowFile content (expects it to be JSON from `FreeFormTextWriter`).
+- **Parses** the JSON into a Python dictionary.
+- **Joins** all key-value pairs into a **single string** like `"column1=value1, column2=value2"`.
+- **Writes** the new string **back into the FlowFile**.
+- **Transfers** it to `success`, or `failure` if an error occurs.
+
+---
+
+### 🔹 What You'll Get:
+After this, the output will be a **single string** per row, like:
+
+```
+attribute1_name=nameA1, attribute1_price=priceA1, attribute2_name=nameB1, attribute2_price=priceB1
+attribute1_name=nameA2, attribute1_price=priceA2, attribute2_name=nameB2, attribute2_price=priceB2
+...
+```
+
+This ensures **MergeRecord** will get the properly formatted data.
+
+---
+
