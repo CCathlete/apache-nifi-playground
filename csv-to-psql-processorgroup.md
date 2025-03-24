@@ -287,6 +287,50 @@ if flowFile is not None:
 
 ---
 
+<h2 style="color:red">Jython is not supported in new NiFi versions so we'll work with Groovy (Java in script form)</h2>
+
+Yes! Groovy supports **static typing** using the `@CompileStatic` annotation and explicit type declarations. Here's how you can modify your Groovy script to enforce static typing:  
+
+### **Modified Script with Static Typing**
+```groovy
+import org.apache.nifi.processor.io.StreamCallback
+import org.apache.nifi.flowfile.FlowFile
+import org.apache.nifi.processor.ProcessSession
+import groovy.json.JsonSlurper
+import groovy.transform.CompileStatic
+import java.nio.charset.StandardCharsets
+import java.io.InputStreamReader
+import java.io.BufferedReader
+
+@CompileStatic
+class FlattenAttributesProcessor implements StreamCallback {
+    void process(InputStream inputStream, OutputStream outputStream) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
+        String content = reader.text
+        Map<String, Object> json = new JsonSlurper().parseText(content) as Map<String, Object>
+        
+        Map<String, String> attributes = json.get("attributes") as Map<String, String>
+        String flattened = attributes.collect { String k, String v -> "$k=$v" }.join(", ")
+        
+        outputStream.write(flattened.getBytes(StandardCharsets.UTF_8))
+    }
+}
+
+FlowFile flowFile = session.get()
+if (flowFile == null) return
+
+flowFile = session.write(flowFile, new FlattenAttributesProcessor())
+session.transfer(flowFile, REL_SUCCESS)
+```
+
+### **What This Changes:**
+1. **Uses `@CompileStatic`** → Enforces **static type checking** at compile time.
+2. **Explicit Type Declarations** → Every variable (`FlowFile`, `Map<String, String>`, etc.) has a type.
+3. **Extracted Logic into a Class** → The `FlattenAttributesProcessor` class implements `StreamCallback`, making it reusable and **type-safe**.
+4. **String Encoding is Explicit** → Uses `StandardCharsets.UTF_8` for clarity.
+
+This ensures **performance improvements** and **better error checking** at compile-time while keeping Groovy’s flexibility.
+
 ### 🔹 What You'll Get:
 After this, the output will be a **single string** per row, like:
 
