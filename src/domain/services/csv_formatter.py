@@ -1,31 +1,41 @@
 import sys
 
 
-def process_csv(input_stream: list[str]) -> list[str]:
-    """Processes CSV data from stdin, replacing empty values and cleaning up lines."""
+class CsvFormatter:
 
-    valid_lines: list[str] = []
+    def __init__(
+        self,
+        input_stream: list[str],
+    ) -> None:
+        self.input_stream: list[str] = input_stream
 
-    for line in input_stream:
-        line = line.strip().replace(":", "-")  # Remove leading/trailing whitespace
+    def process_csv(self) -> list[str]:
+        """Processes CSV data from stdin, replacing empty values and cleaning up lines."""
 
-        # Remove trailing underscores
-        # line = line.rstrip("_")
+        valid_lines: list[str] = []
 
-        # Remove empty lines
-        if not all(value.strip() == "" for value in line.split(",")):
-            # Process each value in the line
-            processed_values: list[str] = [
-                value.strip() if value.strip() else "_" for value in line.split(",")
-            ]
-            valid_lines.append(",".join(processed_values).rstrip("_"))
+        for line in self.input_stream:
+            line = line.strip().replace(":", "-")  # Remove leading/trailing whitespace
 
-    return valid_lines
+            # Remove trailing underscores
+            # line = line.rstrip("_")
+
+            # Remove empty lines
+            if not all(value.strip() == "" for value in line.split(",")):
+                # Process each value in the line
+                processed_values: list[str] = [
+                    value.strip() if value.strip() else "_" for value in line.split(",")
+                ]
+                valid_lines.append(",".join(processed_values).rstrip("_"))
+
+        return valid_lines
 
 
 # Read from stdin and process the data
 if __name__ == "__main__":
     # input_data: str = sys.stdin.readlines()
     # print(repr(input_data))
-    output = process_csv(sys.stdin.readlines())
+    output = CsvFormatter(
+        input_stream=sys.stdin.readlines(),
+    ).process_csv()
     print("\n".join(output), end="")  # Print to stdout (NiFi will capture this)
