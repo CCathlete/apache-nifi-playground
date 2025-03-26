@@ -10,25 +10,8 @@ class DataFormatter(ABC):
     """
 
     @abstractmethod
-    def process_csv(self) -> list[str]:
-        pass
-
-    @property
-    @abstractmethod
-    def input_data(self) -> list[str]:
-        """
-        Getter method.
-        Enforcing the input_data property.
-        """
-        pass
-
-    @input_data.setter
-    @abstractmethod
-    def input_data(
+    def join_categories_to_string(
         self,
         input_data: list[str],
-    ) -> None:
-        """
-        Setter method.
-        """
+    ) -> list[str]:
         pass

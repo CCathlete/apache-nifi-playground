@@ -1,4 +1,7 @@
 from src.domain.services.implementations.csv_formatter import CsvFormatter
+from src.application.services.implementations.prepare_data_for_warehouse_impl import (
+    PrepareDataForWarehouseImpl,
+)
 import sys
 import argparse
 
@@ -9,9 +12,15 @@ def test_input() -> None:
 
 
 def join_columns_to_one_string() -> None:
-    output: list[str] = CsvFormatter(
-        input_stream=sys.stdin.readlines(),
-    ).process_csv()
+    input_data: list[str] = sys.stdin.readlines()
+
+    # Calling the application service that processes the input data.
+    # When passing in a CSV formatter, the join categories will be
+    # join columns.
+    output: list[str] = PrepareDataForWarehouseImpl(
+        CsvFormatter(),
+    ).join_categories_to_one_string(input_data)
+
     print("\n".join(output), end="")  # Print to stdout (NiFi will capture this)
 
 

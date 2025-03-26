@@ -4,7 +4,10 @@ from src.domain.services.interfaces.formatter import DataFormatter
 
 class PrepareDataForWarehouse(ABC):
     @abstractmethod
-    def prepare_csv_to_psql(self) -> list[str]:
+    def join_categories_to_one_string(
+        self,
+        input_data: list[str],
+    ) -> list[str]:
         pass
 
     @property
