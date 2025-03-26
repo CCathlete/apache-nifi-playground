@@ -2,7 +2,7 @@ from src.application.services.interfaces.data_formatter import PrepareDataForWar
 from src.domain.services.interfaces.formatter import DataFormatter
 
 
-class SurchargePrepare(PrepareDataForWarehouse):
+class PrepareDataForWarehouseImpl(PrepareDataForWarehouse):
     """
     An application service for preparing input data for data warehouse.
 
