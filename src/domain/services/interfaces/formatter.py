@@ -15,3 +15,10 @@ class DataFormatter(ABC):
         input_data: list[str],
     ) -> list[str]:
         pass
+
+    @abstractmethod
+    def convert_to_json(self, data: list[str]) -> list[str]:
+        """
+        Turns each line in the data into a JSON object.
+        """
+        pass

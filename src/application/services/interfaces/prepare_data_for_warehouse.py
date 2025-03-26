@@ -10,6 +10,13 @@ class PrepareDataForWarehouse(ABC):
     ) -> list[str]:
         pass
 
+    @abstractmethod
+    def prepare_for_bulk_insert(
+        self,
+        input_data: list[str],
+    ) -> list[str]:
+        pass
+
     @property
     @abstractmethod
     def data_formatter(self) -> DataFormatter:

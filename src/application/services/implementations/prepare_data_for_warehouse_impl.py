@@ -16,7 +16,8 @@ class PrepareDataForWarehouseImpl(PrepareDataForWarehouse):
     """
 
     def __init__(self, data_formatter: DataFormatter):
-        self.data_formatter = data_formatter
+        # Bypassing the setter for initial assignment.
+        self._data_formatter: DataFormatter = data_formatter
 
     def join_categories_to_one_string(
         self,
@@ -24,11 +25,17 @@ class PrepareDataForWarehouseImpl(PrepareDataForWarehouse):
     ) -> list[str]:
         return self.data_formatter.join_categories_to_string(input_data)
 
+    def prepare_for_bulk_insert(
+        self,
+        data: list[str],
+    ) -> list[str]:
+        return self.data_formatter.convert_to_json(data)
+
     # Getters and Setters for enforced properties.
     @property
     def data_formatter(self) -> DataFormatter:
-        return self.data_formatter
+        return self._data_formatter
 
     @data_formatter.setter
     def data_formatter(self, data_formatter: DataFormatter):
-        self.data_formatter = data_formatter
+        self._data_formatter = data_formatter
