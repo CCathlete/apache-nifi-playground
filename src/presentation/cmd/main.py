@@ -1,4 +1,4 @@
-from src.domain.services.csv_formatter import CsvFormatter
+from src.domain.services.implementations.csv_formatter import CsvFormatter
 import sys
 
 
