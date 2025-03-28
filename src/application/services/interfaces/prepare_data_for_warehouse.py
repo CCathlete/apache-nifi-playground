@@ -14,6 +14,7 @@ class PrepareDataForWarehouse(ABC):
     def prepare_for_bulk_insert(
         self,
         input_data: list[str],
+        json_type: DataFormatter.JsonType,
     ) -> list[str]:
         pass
 

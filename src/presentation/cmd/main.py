@@ -34,7 +34,7 @@ def join_columns_to_one_string() -> None:
     print("\n".join(output), end="")  # Print to stdout (NiFi will capture this)
 
 
-def prepare_for_bulk_insertion() -> None:
+def prepare_for_bulk_insertion_combined_columns() -> None:
     """
     Converts each csv line to a json record with added categories.
     """
@@ -42,7 +42,10 @@ def prepare_for_bulk_insertion() -> None:
 
     output: list[str] = PrepareDataForWarehouseImpl(
         CsvFormatter(),
-    ).prepare_for_bulk_insert(input_data)
+    ).prepare_for_bulk_insert(
+        input_data,
+        CsvFormatter.JsonType.COMBINED_COLUMNS,
+    )
 
     print("\n".join(output), end="")  # Print to stdout (NiFi will capture this)
 
@@ -72,5 +75,5 @@ if __name__ == "__main__":
     if args.operation == "test_data_to_join_columns":
         test_data_join_columns()
 
-    if args.operation == "prepare_for_bulk_insert":
-        prepare_for_bulk_insertion()
+    if args.operation == "prepare_for_bulk_insertion_combined_columns":
+        prepare_for_bulk_insertion_combined_columns()

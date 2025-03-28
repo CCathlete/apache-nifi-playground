@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 
 
 class DataFormatter(ABC):
@@ -9,6 +10,10 @@ class DataFormatter(ABC):
         process_csv(self) -> list[str]
     """
 
+    class JsonType(Enum):
+        COMBINED_COLUMNS = 1
+        MAP_CSV_COLUMNS = 2
+
     @abstractmethod
     def join_categories_to_string(
         self,
@@ -17,7 +22,11 @@ class DataFormatter(ABC):
         pass
 
     @abstractmethod
-    def convert_to_json(self, data: list[str]) -> list[str]:
+    def convert_to_json(
+        self,
+        data: list[str],
+        json_type: JsonType,
+    ) -> list[str]:
         """
         Turns each line in the data into a JSON object.
         """

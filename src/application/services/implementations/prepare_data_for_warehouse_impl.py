@@ -3,6 +3,8 @@ from src.application.services.interfaces.prepare_data_for_warehouse import (
 )
 from src.domain.services.interfaces.formatter import DataFormatter
 
+JsonType = DataFormatter.JsonType
+
 
 class PrepareDataForWarehouseImpl(PrepareDataForWarehouse):
     """
@@ -28,8 +30,9 @@ class PrepareDataForWarehouseImpl(PrepareDataForWarehouse):
     def prepare_for_bulk_insert(
         self,
         data: list[str],
+        json_type: JsonType,
     ) -> list[str]:
-        return self.data_formatter.convert_to_json(data)
+        return self.data_formatter.convert_to_json(data, json_type)
 
     # Getters and Setters for enforced properties.
     @property
