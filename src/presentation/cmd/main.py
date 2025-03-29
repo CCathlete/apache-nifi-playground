@@ -2,7 +2,7 @@ from src.domain.services.implementations.csv_formatter import CsvFormatter
 from src.application.services.implementations.prepare_data_for_warehouse_impl import (
     PrepareDataForWarehouseImpl,
 )
-from test.test_csv import DATA
+from src.test.test_data.test_csv import DATA
 import sys
 import argparse
 
